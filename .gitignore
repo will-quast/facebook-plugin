@@ -15,3 +15,7 @@ build/*
 xcuserdata
 profile
 *.moved-aside
+
+ios/example/FacebookPlugin/Plugins/Facebook/
+ios/example/FacebookPlugin/Plugins/FacebookPlugin.h
+ios/example/FacebookPlugin/Plugins/FacebookPlugin.m
