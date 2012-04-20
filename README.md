@@ -1,8 +1,8 @@
 facebook-plugin
 ===============
 
-A *simpler* PhoneGap/Cordova plugin to access the native Facebook SDK on IOS and Android.
-This plugin is different the official plugin at [phonegap-plugin-facebook-connect](https://github.com/davejohnson/phonegap-plugin-facebook-connect) in they it strives to be simpler, smaller and easier to debug.  The official plugin uses a patched version of the facebook-js-sdk with hooks to make native SDK calls where necessary.  This approach lead to a very large memory footprint in javascript (due to the size of facebook-js-sdk) and adds unnecessary complexity to development.  This is ideal for apps that do not make use of XFBML and Social Plugins.
+A *simpler* [Apache Cordova](http://incubator.apache.org/cordova/) (aka [PhoneGap](http://phonegap.com/)) plugin to access the native Facebook SDK on [iOS](http://developers.facebook.com/docs/reference/iossdk/) and [Android](http://developers.facebook.com/docs/reference/androidsdk/).
+This plugin is different from the official plugin at [phonegap-plugin-facebook-connect](https://github.com/davejohnson/phonegap-plugin-facebook-connect) in that it strives to be simpler, smaller and easier to debug.  The official plugin uses a patched version of the facebook-js-sdk with hooks to make native SDK calls where necessary.  This approach leads to a very large memory footprint in javascript (this is a performance issue) and adds unnecessary complexity to development.  This plugin is ideal for Cordova apps that need to take advantage of the Facebook SDK (Authentication, Graph API, Dialogs), but do not plan to make use of facebook-js-sdk's features like XFBML and Social Plugins.
 
 Facebook-plugin exposes to the developer as JavaScript, the native Facebook SDK methods:
 * login
