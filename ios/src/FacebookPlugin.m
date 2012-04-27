@@ -16,7 +16,7 @@
 
 #import "FacebookPlugin.h"
 
-#define APP_ID @"263149720445234"
+#define APP_ID @"_REPLACE_ME_WITH_YOUR_APP_ID_FROM_FACEBOOK_"
 
 @implementation FacebookPlugin
 
