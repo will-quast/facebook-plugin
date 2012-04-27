@@ -1,10 +1,18 @@
-//
-//  FacebookPlugin.m
-//  FacebookPlugin
-//
-//  Created by bohemian on 4/19/12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
-//
+/*
+ * Copyright 2012 williamquast.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #import "FacebookPlugin.h"
 
@@ -12,7 +20,22 @@
 
 @implementation FacebookPlugin
 
-@synthesize facebook, loginCallbackID, logoutCallbackID;
+@synthesize facebook=_facebook, loginCallbackID=_loginCallbackID, logoutCallbackID=_logoutCallbackID, activeDelegates=_activeDelegates;
+
+- (CDVPlugin*) initWithWebView:(UIWebView *)theWebView {
+    
+    _facebook = [[Facebook alloc] initWithAppId:APP_ID andDelegate: self];
+    _activeDelegates = [[NSMutableSet alloc] initWithCapacity:0];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults objectForKey:@"FBAccessTokenKey"] 
+        && [defaults objectForKey:@"FBExpirationDateKey"]) {
+        self.facebook.accessToken = [defaults objectForKey:@"FBAccessTokenKey"];
+        self.facebook.expirationDate = [defaults objectForKey:@"FBExpirationDateKey"];
+    }
+    
+    return [super initWithWebView:theWebView];
+}
 
 - (void) handleOpenURL:(NSNotification*)notification
 {
@@ -25,31 +48,15 @@
 	[self.facebook handleOpenURL:url];
 }
 
-- (CDVPlugin*) initWithWebView:(UIWebView *)theWebView {
-    
-    NSLog(@"initWithWebView");
-    
-    self.facebook = [[Facebook alloc] initWithAppId:APP_ID andDelegate: self];
-//    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-//    if ([defaults objectForKey:@"FBAccessTokenKey"] 
-//        && [defaults objectForKey:@"FBExpirationDateKey"]) {
-//        self.facebook.accessToken = [defaults objectForKey:@"FBAccessTokenKey"];
-//        self.facebook.expirationDate = [defaults objectForKey:@"FBExpirationDateKey"];
-//    }
-    
-    return [super initWithWebView:theWebView];
-}
-
 - (void)login:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
-    self.loginCallbackID = [arguments objectAtIndex:0];
-    NSLog(@"login: %@", loginCallbackID);
+    
+    [self setLoginCallbackID:[arguments objectAtIndex:0]];
     
     NSString *scope = (NSString*)[options objectForKey:@"scope"];
     
     if (![self.facebook isSessionValid]) {
         [self.facebook authorize: [scope componentsSeparatedByString:@","]];
     } else {
-        
         NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:1];
         [message setObject:[NSNumber numberWithBool:YES] forKey:@"success"];
         CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:message];
@@ -57,8 +64,12 @@
     }
 }
 
+- (void)activeDelegateFinished:(id)delegate {
+    [self.activeDelegates removeObject:delegate];
+}
+
 - (void)logout:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
-    self.logoutCallbackID = [arguments objectAtIndex:0];
+    [self setLogoutCallbackID: [arguments objectAtIndex:0]];
     
     [self.facebook logout:self];
 }
@@ -73,16 +84,14 @@
 
 - (void)graphRequest:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
     NSString *callbackID = [arguments objectAtIndex:0];
-    NSLog(@"graphRequest: %@", callbackID);
-    
     NSString *graphPath = (NSString*)[options objectForKey:@"graphPath"];
     NSMutableDictionary *params = (NSMutableDictionary*)[options objectForKey:@"params"];
     
-    MyFBRequestDelegate *delegate = [[MyFBRequestDelegate alloc] init];
-    delegate.callbackID = callbackID;
-    delegate.plugin = self;
+    MyFBRequestDelegate *delegate = [[MyFBRequestDelegate alloc] initWithFacebookPlugin:self andCallbackID:callbackID];
+    [self.activeDelegates addObject:delegate];
     
     [self.facebook requestWithGraphPath:graphPath andParams:params andDelegate:delegate];
+    [delegate release];
 }
 
 - (void)dialog:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
@@ -90,18 +99,19 @@
     NSString *action = (NSString*)[options objectForKey:@"action"];
     NSMutableDictionary *params = (NSMutableDictionary*)[options objectForKey:@"params"];
     
-    MyFBDialogDelegate *delegate = [[MyFBDialogDelegate alloc] init];
-    delegate.callbackID = callbackID;
-    delegate.plugin = self;
+    MyFBDialogDelegate *delegate = [[MyFBDialogDelegate alloc] initWithFacebookPlugin:self andCallbackID:callbackID];
+    [self.activeDelegates addObject:delegate];
     
     [self.facebook dialog:action andParams:params andDelegate:delegate];
+    [delegate release];
 }
 
 - (void)dealloc {
     
-    if (facebook != nil) {
-        [facebook release];
-    }
+    [_loginCallbackID release];
+    [_logoutCallbackID release];
+    [_facebook release];
+    [_activeDelegates release];
     
     [super dealloc];
 }
@@ -113,10 +123,10 @@
  */
 - (void)fbDidLogin {
     
-//    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-//    [defaults setObject:[facebook accessToken] forKey:@"FBAccessTokenKey"];
-//    [defaults setObject:[facebook expirationDate] forKey:@"FBExpirationDateKey"];
-//    [defaults synchronize];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:[self.facebook accessToken] forKey:@"FBAccessTokenKey"];
+    [defaults setObject:[self.facebook expirationDate] forKey:@"FBExpirationDateKey"];
+    [defaults synchronize];
     
     NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:1];
     [message setObject:[NSNumber numberWithBool:YES] forKey:@"success"];
@@ -144,15 +154,14 @@
  * See extendAccessToken for more details.
  */
 - (void)fbDidExtendToken:(NSString*)accessToken expiresAt:(NSDate*)expiresAt {
-    NSLog(@"fbDidExtendToken");
     
-//    self.facebook.accessToken = accessToken;
-//    self.facebook.expirationDate = expiresAt;
-//    
-//    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-//    [defaults setObject:accessToken forKey:@"FBAccessTokenKey"];
-//    [defaults setObject:expiresAt forKey:@"FBExpirationDateKey"];
-//    [defaults synchronize];
+    [self.facebook setAccessToken: accessToken];
+    [self.facebook setExpirationDate: expiresAt];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:accessToken forKey:@"FBAccessTokenKey"];
+    [defaults setObject:expiresAt forKey:@"FBExpirationDateKey"];
+    [defaults synchronize];
 }
 
 /**
@@ -160,13 +169,13 @@
  */
 - (void)fbDidLogout {
     
-//    // Remove saved authorization information if it exists
-//    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-//    if ([defaults objectForKey:@"FBAccessTokenKey"]) {
-//        [defaults removeObjectForKey:@"FBAccessTokenKey"];
-//        [defaults removeObjectForKey:@"FBExpirationDateKey"];
-//        [defaults synchronize];
-//    }
+    // Remove saved authorization information if it exists
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults objectForKey:@"FBAccessTokenKey"]) {
+        [defaults removeObjectForKey:@"FBAccessTokenKey"];
+        [defaults removeObjectForKey:@"FBExpirationDateKey"];
+        [defaults synchronize];
+    }
     
     CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK];
     [self writeJavascript:[result toSuccessCallbackString: self.logoutCallbackID]];
@@ -181,7 +190,13 @@
  */
 - (void)fbSessionInvalidated {
     
-    NSLog(@"fbSessionInvalidated not implemented");
+    // Remove saved authorization information if it exists
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults objectForKey:@"FBAccessTokenKey"]) {
+        [defaults removeObjectForKey:@"FBAccessTokenKey"];
+        [defaults removeObjectForKey:@"FBExpirationDateKey"];
+        [defaults synchronize];
+    }
 }
 
 @end
@@ -195,30 +210,17 @@
  */
 @implementation MyFBDialogDelegate
 
-@synthesize plugin, callbackID;
+@synthesize plugin=_plugin, callbackID=_callbackID;
 
-
-/**
- * Called when the dialog succeeds and is about to be dismissed.
- */
-- (void)dialogDidComplete:(FBDialog *)dialog {
+- (id) initWithFacebookPlugin:(FacebookPlugin*)plugin andCallbackID:(NSString*)callbackID {
+    self = [super init];
     
-    NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:1];
-    [message setObject:[NSNumber numberWithBool:YES] forKey:@"success"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:message];
-    [self.plugin writeJavascript:[result toSuccessCallbackString: self.callbackID]];
-}
-
-/**
- * Called when the dialog is cancelled and is about to be dismissed.
- */
-- (void)dialogDidNotComplete:(FBDialog *)dialog {
+    if(self) {
+        [self setPlugin: plugin]; // assign
+        [self setCallbackID: callbackID]; // copy
+    }
     
-    NSMutableDictionary *message = [NSMutableDictionary dictionaryWithCapacity:2];
-    [message setObject:[NSNumber numberWithBool:NO] forKey:@"success"];
-    [message setObject:[NSNumber numberWithBool:YES] forKey:@"cancelled"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:message];
-    [self.plugin writeJavascript:[result toSuccessCallbackString: self.callbackID]];
+    return self;
 }
 
 /**
@@ -233,6 +235,7 @@
     }
     CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:message];
     [self.plugin writeJavascript:[result toSuccessCallbackString: self.callbackID]];
+    [self.plugin activeDelegateFinished:self];
 }
 
 /**
@@ -248,6 +251,7 @@
     }
     CDVPluginResult* result = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:message];
     [self.plugin writeJavascript:[result toSuccessCallbackString: self.callbackID]];
+    [self.plugin activeDelegateFinished:self];
 }
 
 /**
@@ -257,6 +261,7 @@
     
     CDVPluginResult* cdvResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_ERROR messageAsString:[error localizedDescription]];
     [self.plugin writeJavascript:[cdvResult toSuccessCallbackString: self.callbackID]];
+    [self.plugin activeDelegateFinished:self];
 }
 
 /**
@@ -275,6 +280,14 @@
     return YES;
 }
 
+- (void)dealloc {
+    
+    [_plugin release];
+    [_callbackID release];
+    
+    [super dealloc];
+}
+
 @end
 
 
@@ -285,7 +298,18 @@
  */
 @implementation MyFBRequestDelegate
 
-@synthesize plugin, callbackID;
+@synthesize plugin=_plugin, callbackID=_callbackID;
+
+- (id) initWithFacebookPlugin:(FacebookPlugin*)plugin andCallbackID:(NSString*)callbackID {
+    self = [super init];
+    
+    if(self) {
+        [self setPlugin: plugin]; // assign
+        [self setCallbackID: callbackID]; // copy
+    }
+    
+    return self;
+}
 
 /**
  * Called when an error prevents the request from completing successfully.
@@ -294,6 +318,7 @@
     
     CDVPluginResult* cdvResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_ERROR messageAsString:[error localizedDescription]];
     [self.plugin writeJavascript:[cdvResult toSuccessCallbackString: self.callbackID]];
+    [self.plugin activeDelegateFinished:self];
 }
 
 /**
@@ -311,6 +336,15 @@
     
     CDVPluginResult* cdvResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_OK messageAsDictionary:result];
     [self.plugin writeJavascript:[cdvResult toSuccessCallbackString: self.callbackID]];
+    [self.plugin activeDelegateFinished:self];
+}
+
+- (void)dealloc {
+    
+    [_plugin release];
+    [_callbackID release];
+    
+    [super dealloc];
 }
 
 @end
