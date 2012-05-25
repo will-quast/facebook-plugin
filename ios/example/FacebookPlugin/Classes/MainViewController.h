@@ -21,8 +21,7 @@
 //  MainViewController.h
 //  FacebookPlugin
 //
-//  Created by bohemian on 4/10/12.
-//  Copyright __MyCompanyName__ 2012. All rights reserved.
+//  Created by williamquast on 5/25/12.
 //
 
 #ifdef CORDOVA_FRAMEWORK

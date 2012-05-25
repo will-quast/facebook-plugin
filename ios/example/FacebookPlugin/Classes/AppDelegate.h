@@ -21,8 +21,7 @@
 //  AppDelegate.h
 //  FacebookPlugin
 //
-//  Created by bohemian on 4/10/12.
-//  Copyright __MyCompanyName__ 2012. All rights reserved.
+//  Created by williamquast on 5/25/12.
 //
 
 #import <UIKit/UIKit.h>
@@ -32,24 +31,19 @@
 #else
     #import "CDVViewController.h"
 #endif
-#import "FBConnect.h"
 
 
-@interface AppDelegate : NSObject < UIApplicationDelegate, UIWebViewDelegate, CDVCommandDelegate, FBSessionDelegate> {
+@interface AppDelegate : NSObject < UIApplicationDelegate > {
 
-	NSString* invokeString;
-    Facebook* facebook;
 }
 
 // invoke string is passed to your app on launch, this is only valid if you 
-// edit FooBar.plist to add a protocol
+// edit FacebookPlugin-Info.plist to add a protocol
 // a simple tutorial can be found here : 
 // http://iphonedevelopertips.com/cocoa/launching-your-own-application-via-a-custom-url-scheme.html
 
-@property (nonatomic, copy)  NSString* invokeString;
 @property (nonatomic, retain) IBOutlet UIWindow* window;
 @property (nonatomic, retain) IBOutlet CDVViewController* viewController;
-@property (nonatomic, retain) Facebook *facebook;
 
 @end
 

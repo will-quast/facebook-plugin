@@ -11,7 +11,6 @@ Facebook-plugin exposes to the developer as JavaScript, the native Facebook SDK 
 * graphRequest  [Facebook Graph API](http://developers.facebook.com/docs/reference/api/)
 * dialog [Facebook Dialogs Overview](http://developers.facebook.com/docs/reference/dialogs/)
 
-Currently supports Apache Cordova 1.5.
+Currently supports Apache Cordova 1.7.0 only.
 
 Except as otherwise noted, the facebook-plugin is licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
-
