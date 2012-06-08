@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title></title>
+  
+	<meta charset="utf-8">
+	
+	<!-- iPad/iPhone specific css below, add after your main css >
+	<link rel="stylesheet" media="only screen and (max-device-width: 1024px)" href="ipad.css" type="text/css" />		
+	<link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="iphone.css" type="text/css" />		
+	-->
+	<!-- If your application is targeting iOS BEFORE 4.0 you MUST put json2.js from http://www.JSON.org/json2.js into your www directory and include it here -->
+  <script type="text/javascript" charset="utf-8" src="cordova-1.7.0.js"></script>
+  <script type="text/javascript" charset="utf-8" src="facebook-plugin.js"></script>
+  <script type="text/javascript">
+	
+	function onBodyLoad() {
+		document.addEventListener("deviceready", onDeviceReady, false);
+	}
+    
+	function onDeviceReady() {
+    // do your thing!
+    console.log('begin');
+
+    FacebookPlugin = cordova.require('cordova/plugin/facebookPlugin');
+	}
+	
+	function doLogin() {
+	  
+    FacebookPlugin.login(
+      /*success*/function(response) {
+        console.log('login callback');
+        
+        var message = 'success: '+response.success+' cancelled: '+response.cancelled;
+        document.getElementById('loginResponse').innerHTML = message;
+      },
+      /*failed*/function(err) {
+        console.log('login failed. err='+err);
+      },
+      /*options*/{scope:'email'}
+    );
+
+    console.log('login sent');
+    
+	}
+	
+	function doGraphRequest() {
+	  
+    FacebookPlugin.graphRequest(
+      /*success*/function(response) {
+        console.log('graph me callback');
+        
+        var message = 'id: '+response.id+' name: '+response.name;
+        document.getElementById('graphResponse').innerHTML = message;
+      },
+      /*failed*/function(err) {
+        console.log('graph me failed. err='+err);
+      },
+      /*options*/{graphPath:'me'}
+    );
+    
+    console.log('graphRequest sent');
+	}
+	
+	function doDialog() {
+	  
+    FacebookPlugin.dialog(
+      /*success*/function(response) {
+        console.log('dialog callback');
+        
+        var message = 'success: '+response.success+' cancelled: '+response.cancelled+' url: '+response.url;
+        document.getElementById('dialogResponse').innerHTML = message;
+      },
+      /*failed*/function(err) {
+        console.log('dialog failed. err='+err);
+      },
+      /*options*/{action:'feed'}
+    );
+    
+    console.log('dialog sent');
+	}
+	
+  </script>
+  </head>
+  <body onload="onBodyLoad()">
+      
+      <input type="button" onclick="doLogin()" value="Login"></input><div id="loginResponse"></div><br>
+      <input type="button" onclick="doGraphRequest()" value="Graph Request (Me)"></input><div id="graphResponse"></div><br>
+      <input type="button" onclick="doDialog()" value="Dialog (Feed)"></input><div id="dialogResponse"></div><br>
+      
+  </body>
+</html>

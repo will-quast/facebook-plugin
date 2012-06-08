@@ -20,3 +20,14 @@ ios/example/FacebookPlugin/Plugins/Facebook/
 ios/example/FacebookPlugin/Plugins/FacebookPlugin.h
 ios/example/FacebookPlugin/Plugins/FacebookPlugin.m
 ios/example/www/facebook-plugin.js
+android/example/facebook-plugin-example/bin/
+android/example/facebook-plugin-example/gen/
+android/example/facebook-plugin-facebook-sdk/.settings/
+android/example/facebook-plugin-facebook-sdk/AndroidManifest.xml
+android/example/facebook-plugin-facebook-sdk/bin/
+android/example/facebook-plugin-facebook-sdk/build.xml
+android/example/facebook-plugin-facebook-sdk/gen/
+android/example/facebook-plugin-facebook-sdk/project.properties
+android/example/facebook-plugin-facebook-sdk/res/
+android/example/facebook-plugin-facebook-sdk/src/
+android/example/facebook-plugin-example/assets/www/facebook-plugin.js
