@@ -31,3 +31,4 @@ android/example/facebook-plugin-facebook-sdk/project.properties
 android/example/facebook-plugin-facebook-sdk/res/
 android/example/facebook-plugin-facebook-sdk/src/
 android/example/facebook-plugin-example/assets/www/facebook-plugin.js
+android/example/facebook-plugin-example/src/com/williamquast/plugin/FacebookPlugin.java
